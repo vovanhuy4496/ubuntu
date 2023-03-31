@@ -1,0 +1,65 @@
+version: '2.17.2' #phiên bản của docker-compose
+
+services: #dịnh nghĩa các container của chúng ta ở đây
+#PHP Service
+    app: #khởi tạo container tên là app
+       build:
+           context: .
+           dockerfile: Dockerfile
+       image: php:8.1.2
+       container_name: project_app # tên container là project_app
+       restart: always
+       tty: true
+       environment:
+           SERVICE_NAME: huy_oc_cho
+           SERVICE_TAGS: dev
+       working_dir: /var/www/test
+       volumes:
+            - ./:/var/www/test
+            - ./php/php.ini:/etc/php/8.1/fpm/php.ini
+       networks:
+            - app-network
+
+#Nginx Service
+    webserver:
+       image: nginx
+       container_name: project_webserver
+       restart: always
+       tty: true
+       ports:
+           - "80:80"
+           - "443:443"
+       volumes:
+           - ./:/var/www/test
+           - ./nginx/conf.d/:/etc/nginx/sites-available/test
+        networks:
+           - app-network
+
+#MySQL Service
+    db:
+        image: mysql:8.0.32
+        container_name: project_db
+        restart: always
+        tty: true
+        ports:
+            - "3376:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root # password của super user 
+            MYSQL_DATABASE: test # name db
+            MYSQL_USER: root # tên user
+            MYSQL_PASSWORD: Admin1996@ # password của user
+        volumes:
+            - dbdata:/var/lib/mysql/
+            - ./mysql/my.cnf:/etc/mysql/my.cnf
+        networks:
+            - app-network
+
+#**app-network: **như là 1 mạng cầu nối kết nối các Container lại với nhau, tạo điều kiện giao tiếp giữa các Container.
+#Docker Networks
+    networks:
+        app-network:
+            driver: bridge
+#Volumes
+    volumes:
+        dbdata:
+            driver: local
